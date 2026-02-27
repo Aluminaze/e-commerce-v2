@@ -7,6 +7,11 @@ export const useLoginMutation = () => {
 		mutationFn: authApi.login
 	});
 };
+export const useLogoutMutation = () => {
+	return useMutation({
+		mutationFn: authApi.logout
+	});
+};
 
 export const useMeQuery = () => {
 	return useQuery({
