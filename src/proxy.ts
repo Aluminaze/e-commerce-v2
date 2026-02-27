@@ -12,27 +12,22 @@ export function proxy(request: NextRequest) {
 		pathname.startsWith('/_next') ||
 		pathname.startsWith('/favicon');
 
-	// Authenticated user visiting /login → redirect to /dashboard
 	if (pathname === '/login' && (hasAccess || hasRefresh)) {
 		return NextResponse.redirect(new URL('/dashboard', request.url));
 	}
 
-	// Public paths — allow through
 	if (isPublic) {
 		return NextResponse.next();
 	}
 
-	// API routes through gateway — let the route handler deal with auth
 	if (pathname.startsWith('/api/')) {
 		return NextResponse.next();
 	}
 
-	// No tokens at all → redirect to /login
 	if (!hasAccess && !hasRefresh) {
 		return NextResponse.redirect(new URL('/login', request.url));
 	}
 
-	// Has at least refreshToken → allow through (gateway will handle refresh)
 	return NextResponse.next();
 }
 

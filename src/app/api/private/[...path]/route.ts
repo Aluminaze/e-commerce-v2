@@ -164,7 +164,6 @@ async function handle(
 	const accessToken = cookieStore.get(ACCESS_COOKIE)?.value;
 	const refreshToken = cookieStore.get(REFRESH_COOKIE)?.value;
 
-	// 1) try with current accessToken
 	let upstreamRes = await proxyFetch({
 		req,
 		upstreamUrl,
@@ -172,7 +171,6 @@ async function handle(
 		bodyBuf
 	});
 
-	// 2) if 401 — refresh + retry once
 	if (upstreamRes.status === 401) {
 		if (!sessionId || !refreshToken) {
 			const res = NextResponse.json(
@@ -224,7 +222,6 @@ async function handle(
 		}
 	}
 
-	// 3) not 401 — proxy response as-is
 	return new NextResponse(upstreamRes.body, {
 		status: upstreamRes.status,
 		headers: stripHeadersForResponse(upstreamRes.headers)
