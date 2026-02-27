@@ -1,5 +1,6 @@
 'use client';
 
+import { AxiosError } from 'axios';
 import { useRouter } from 'next/navigation';
 import { FC, useId, useState } from 'react';
 import { toast } from 'sonner';
@@ -27,8 +28,18 @@ export const LoginForm: FC = () => {
 		};
 
 		loginMutation.mutate(dto, {
-			onError: () => {
-				toast.error('Login error');
+			onError: (e) => {
+				let message = 'Login error';
+
+				if (e instanceof AxiosError) {
+					const newMessage = e.response?.statusText ?? '';
+
+					if (message) {
+						message = newMessage;
+					}
+				}
+
+				toast.error(message);
 			},
 			onSuccess: ({ user }) => {
 				toast.success(`Welcome, ${user.firstName}!`);

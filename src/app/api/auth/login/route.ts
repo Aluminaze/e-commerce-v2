@@ -1,3 +1,4 @@
+import { HttpStatusCode } from 'axios';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { LoginRequestDto } from '@/features/auth/api/endpoints/login.endpoint';
@@ -35,6 +36,19 @@ export async function POST(req: NextRequest) {
 	const data = await upstreamRes.json().catch(() => null);
 
 	if (!upstreamRes.ok || !data?.accessToken || !data?.refreshToken) {
+		const statusCode = upstreamRes.status;
+
+		if (statusCode === HttpStatusCode.BadRequest) {
+			return NextResponse.json(
+				{
+					message: upstreamRes.statusText,
+					upstreamStatus: statusCode,
+					data
+				},
+				{ status: statusCode }
+			);
+		}
+
 		return NextResponse.json(
 			{
 				message: 'Login failed',
