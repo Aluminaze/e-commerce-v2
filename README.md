@@ -1,6 +1,6 @@
 # E-Commerce v2
 
-> [https://example.com](https://example.com)
+> [https://e-commerce-v2-indol.vercel.app/](https://e-commerce-v2-indol.vercel.app/)
 
 ## Запуск локально
 
