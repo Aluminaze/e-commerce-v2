@@ -32,9 +32,9 @@ export const LoginForm: FC = () => {
 				let message = 'Login error';
 
 				if (e instanceof AxiosError) {
-					const newMessage = e.response?.statusText ?? '';
+					const newMessage = e.response?.statusText || 'Invalid credentials';
 
-					if (message) {
+					if (newMessage) {
 						message = newMessage;
 					}
 				}
