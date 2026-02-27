@@ -1,30 +1,29 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import { toast } from 'sonner';
 
+import { useLogoutMutation } from '@/features/auth/api/auth.hooks';
+
+import { useContextAuth } from '../store/context-auth';
+
 export const Header: FC = () => {
+	const { setUser } = useContextAuth();
+	const logoutMutation = useLogoutMutation();
 	const router = useRouter();
-	const [isFetching, setIsFetching] = useState(false);
 
-	const handleLogout = async () => {
-		try {
-			setIsFetching(true);
-
-			const res = await fetch('/api/auth/logout', { method: 'POST' });
-
-			if (!res.ok) {
-				throw new Error();
+	const handleLogout = () => {
+		logoutMutation.mutate(undefined, {
+			onError: () => {
+				toast.error('Logout failed');
+			},
+			onSuccess: () => {
+				setUser(null);
+				toast.success('Logged out');
+				router.push('/login');
 			}
-
-			toast.success('Logged out');
-			router.push('/login');
-		} catch {
-			toast.error('Logout failed');
-		} finally {
-			setIsFetching(false);
-		}
+		});
 	};
 
 	return (
@@ -34,9 +33,9 @@ export const Header: FC = () => {
 				<button
 					onClick={handleLogout}
 					className='cursor-pointer rounded-lg border border-zinc-300 px-3 py-1.5 text-sm transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800'
-					disabled={isFetching}
+					disabled={logoutMutation.isPending}
 				>
-					{isFetching ? 'Logout...' : 'Logout'}
+					{logoutMutation.isPending ? 'Logout...' : 'Logout'}
 				</button>
 			</div>
 		</header>
