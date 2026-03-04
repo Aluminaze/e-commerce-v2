@@ -7,9 +7,14 @@ import { ACCESS_COOKIE, REFRESH_COOKIE, SESSION_COOKIE } from '@/shared/config';
 
 import { ROUTE_API_LOGOUT_PATHNAME } from '../constants/route-api';
 
+export enum ServerFetchStatus {
+	Ok = 'ok',
+	Error = 'error'
+}
+
 export type ServerFetchResult<T> =
-	| { status: 'ok'; data: T }
-	| { status: 'error'; message: string };
+	| { status: ServerFetchStatus.Ok; data: T }
+	| { status: ServerFetchStatus.Error; message: string };
 
 const TOKEN_NAMES = [ACCESS_COOKIE, REFRESH_COOKIE, SESSION_COOKIE] as const;
 
@@ -77,17 +82,24 @@ export async function serverFetch<T>(
 		}
 
 		if (!res.ok) {
-			return { status: 'error', message: `Request failed: ${res.status}` };
+			return {
+				status: ServerFetchStatus.Error,
+				message: `Request failed: ${res.status}`
+			};
 		}
 
-		return { status: 'ok', data: await res.json() };
-	} catch (err) {
-		if (err instanceof Error && 'digest' in err) {
-			throw err;
+		return { status: ServerFetchStatus.Ok, data: await res.json() };
+	} catch (error) {
+		if (error instanceof Error && 'digest' in error) {
+			throw error;
 		}
 
-		const message = err instanceof Error ? err.message : 'Unknown error';
+		let message = 'Unknown error';
 
-		return { status: 'error', message };
+		if (error instanceof Error) {
+			message = error.message;
+		}
+
+		return { status: ServerFetchStatus.Error, message };
 	}
 }

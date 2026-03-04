@@ -1,6 +1,6 @@
 import { getMe } from '@/features/auth/api/server-fetch/get-me.server-fetch';
 import { Product } from '@/features/product/model';
-import { serverFetch } from '@/shared/lib/server-fetch';
+import { serverFetch, ServerFetchStatus } from '@/shared/lib/server-fetch';
 
 import { ProductsListSSR } from './products-list-ssr';
 
@@ -16,7 +16,7 @@ interface ProductsResponse {
 export async function ProductsViewerSSR() {
 	const meResult = await getMe();
 
-	if (meResult.status === 'error') {
+	if (meResult.status === ServerFetchStatus.Error) {
 		return (
 			<div className='h-24 flex items-center rounded-lg border border-red-200 bg-red-50 p-3 text-sm dark:border-red-800 dark:bg-red-950'>
 				<p className='text-red-600 dark:text-red-400'>{meResult.message}</p>
@@ -28,7 +28,7 @@ export async function ProductsViewerSSR() {
 		`auth/products?limit=${PRODUCTS_LIMIT}&skip=0`
 	);
 
-	if (result.status === 'error') {
+	if (result.status === ServerFetchStatus.Error) {
 		return (
 			<div className='h-24 flex items-center rounded-lg border border-red-200 bg-red-50 p-3 text-sm dark:border-red-800 dark:bg-red-950'>
 				<p className='text-red-600 dark:text-red-400'>{result.message}</p>

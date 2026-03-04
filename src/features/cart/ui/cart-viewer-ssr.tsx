@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 import { getMe } from '@/features/auth/api/server-fetch/get-me.server-fetch';
 import { Cart } from '@/features/cart/model';
-import { serverFetch } from '@/shared/lib/server-fetch';
+import { serverFetch, ServerFetchStatus } from '@/shared/lib/server-fetch';
 
 interface CartsResponse {
 	carts: Cart[];
@@ -14,7 +14,7 @@ interface CartsResponse {
 export async function CartViewerSSR() {
 	const meResult = await getMe();
 
-	if (meResult.status === 'error') {
+	if (meResult.status === ServerFetchStatus.Error) {
 		return (
 			<div className='h-24 flex items-center rounded-lg border border-red-200 bg-red-50 p-3 text-sm dark:border-red-800 dark:bg-red-950'>
 				<p className='text-red-600 dark:text-red-400'>{meResult.message}</p>
@@ -26,7 +26,7 @@ export async function CartViewerSSR() {
 		`auth/carts/user/${meResult.data.id}`
 	);
 
-	if (cartsResult.status === 'error') {
+	if (cartsResult.status === ServerFetchStatus.Error) {
 		return (
 			<div className='h-24 flex items-center rounded-lg border border-red-200 bg-red-50 p-3 text-sm dark:border-red-800 dark:bg-red-950'>
 				<p className='text-red-600 dark:text-red-400'>{cartsResult.message}</p>
