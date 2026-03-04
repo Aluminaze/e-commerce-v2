@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 
-import { CartViewer } from '@/features/cart/ui/cart-viewer';
+import { CartViewerSSR } from '@/features/cart/ui/cart-viewer-ssr';
 import { ProductsViewer } from '@/features/product/ui/products-viewer';
 import { UserInfoSSR } from '@/features/user/ui/user-info-ssr';
 import { Header } from '@/shared/ui/header';
@@ -24,7 +24,13 @@ export default function Page() {
 					<UserInfoSSR />
 				</Suspense>
 
-				<CartViewer />
+				<Suspense
+					fallback={
+						<div className='w-full h-24 animate-pulse rounded-md bg-zinc-200/80' />
+					}
+				>
+					<CartViewerSSR />
+				</Suspense>
 
 				<ProductsViewer />
 			</main>
