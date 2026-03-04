@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 				upstreamStatus: upstreamRes.status,
 				data
 			},
-			{ status: 401 }
+			{ status: HttpStatusCode.Unauthorized }
 		);
 	}
 
