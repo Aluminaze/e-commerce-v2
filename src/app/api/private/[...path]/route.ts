@@ -171,6 +171,15 @@ async function handle(
 		bodyBuf
 	});
 
+	if (!sessionId) {
+		const res = NextResponse.json(
+			{ message: 'Unauthorized' },
+			{ status: HttpStatusCode.Unauthorized }
+		);
+		clearAuthCookies(res);
+		return res;
+	}
+
 	if (upstreamRes.status === HttpStatusCode.Unauthorized) {
 		if (!sessionId || !refreshToken) {
 			const res = NextResponse.json(
