@@ -5,6 +5,8 @@ import { cache } from 'react';
 
 import { ACCESS_COOKIE, REFRESH_COOKIE, SESSION_COOKIE } from '@/shared/config';
 
+import { ROUTE_API_LOGOUT_PATHNAME } from '../constants/route-api';
+
 export type ServerFetchResult<T> =
 	| { status: 'ok'; data: T }
 	| { status: 'error'; message: string };
@@ -56,7 +58,7 @@ export async function serverFetch<T>(
 			.join('; ');
 
 		if (!cookieHeader) {
-			redirect('/api/auth/logout');
+			redirect(ROUTE_API_LOGOUT_PATHNAME);
 		}
 
 		const host = headerStore.get('host') ?? 'localhost:3000';
@@ -71,7 +73,7 @@ export async function serverFetch<T>(
 		captureTokens(res);
 
 		if (res.status === HttpStatusCode.Unauthorized) {
-			redirect('/api/auth/logout');
+			redirect(ROUTE_API_LOGOUT_PATHNAME);
 		}
 
 		if (!res.ok) {

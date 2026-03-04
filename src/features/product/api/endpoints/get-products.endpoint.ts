@@ -1,5 +1,5 @@
 import { Product } from '@/features/product/model';
-import { ROUTE_API_PRIVATE } from '@/shared/constants/route-api';
+import { ROUTE_API_PRIVATE_SEGMENT } from '@/shared/constants/route-api';
 import { axiosAuth } from '@/shared/lib/axios';
 
 export interface ProductsResponseDto {
@@ -26,7 +26,7 @@ export const getProducts = async ({
 		limit: limit.toString(),
 		skip: skip.toString()
 	});
-	const url = `${ROUTE_API_PRIVATE}/auth/products?${params}`;
+	const url = `/${ROUTE_API_PRIVATE_SEGMENT}/auth/products?${params}`;
 
 	return await axiosAuth.get(url).then((resp) => resp.data);
 };

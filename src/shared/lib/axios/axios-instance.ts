@@ -5,10 +5,13 @@ import axios, {
 	HttpStatusCode
 } from 'axios';
 
-import { ROUTE_API_BASE } from '@/shared/constants/route-api';
+import {
+	ROUTE_API_BASE_SEGMENT,
+	ROUTE_API_LOGOUT_PATHNAME
+} from '@/shared/constants/route-api';
 
 const options: CreateAxiosDefaults = {
-	baseURL: ROUTE_API_BASE,
+	baseURL: `/${ROUTE_API_BASE_SEGMENT}`,
 	withCredentials: true
 };
 
@@ -23,7 +26,7 @@ axiosAuth.interceptors.response.use(
 			const statusCode = response.status;
 
 			if (statusCode === HttpStatusCode.Unauthorized) {
-				window.location.href = '/api/auth/logout';
+				window.location.href = ROUTE_API_LOGOUT_PATHNAME;
 
 				return;
 			}
