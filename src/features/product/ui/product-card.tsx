@@ -5,24 +5,22 @@ import { FC } from 'react';
 import { toast } from 'sonner';
 
 import { useAddToCartMutation } from '@/features/cart/api/cart.hooks';
-import { useContextAuth } from '@/shared/store/context-auth';
+import { User } from '@/features/user/model';
 
 import { Product } from '../model';
 
 interface ProductCardProps {
 	data: Product;
+	userId: User['id'];
 }
 
-export const ProductCard: FC<ProductCardProps> = ({ data }) => {
-	const { user } = useContextAuth();
+export const ProductCard: FC<ProductCardProps> = ({ data, userId }) => {
 	const addToCartMutation = useAddToCartMutation();
 
 	const handleAddToCart = (productId: number) => {
-		const userId = user?.id;
-
 		addToCartMutation.mutate(
 			{
-				userId: userId!,
+				userId,
 				products: [{ id: productId, quantity: 1 }]
 			},
 			{

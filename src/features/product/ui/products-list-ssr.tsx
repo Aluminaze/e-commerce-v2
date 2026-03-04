@@ -1,26 +1,37 @@
 'use client';
 
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import { toast } from 'sonner';
 
-import type { Product } from '@/features/product/model';
+import { Product } from '@/features/product/model';
 
-import { useGetMoreProducts, useGetProducts } from '../api/product.hooks';
+import { useGetMoreProducts } from '../api/product.hooks';
 
 import { ProductCard } from './product-card';
 
-export const ProductsList: FC = () => {
-	const productsQuery = useGetProducts({ limit: 5, skip: 0 });
+interface ProductsListSSRProps {
+	initialProducts: Product[];
+	total: number;
+	limit: number;
+	userId: number;
+}
+
+export const ProductsListSSR: FC<ProductsListSSRProps> = ({
+	initialProducts,
+	total,
+	limit,
+	userId
+}) => {
+	const [products, setProducts] = useState(initialProducts);
+	const [totalProducts, setTotalProducts] = useState(total);
 	const getMoreProductsMutation = useGetMoreProducts();
-	const [products, setProducts] = useState<Product[]>([]);
-	const [total, setTotal] = useState(0);
 	const hasMore = products.length < total;
 
 	const handleLoadMore = () => {
 		getMoreProductsMutation.mutate(
 			{
 				skip: products.length,
-				limit: 5
+				limit
 			},
 			{
 				onError: () => {
@@ -28,30 +39,22 @@ export const ProductsList: FC = () => {
 				},
 				onSuccess: (data) => {
 					setProducts((prev) => [...prev, ...data.products]);
-					setTotal(data.total);
+					setTotalProducts(data.total);
 				}
 			}
 		);
 	};
 
-	useEffect(() => {
-		if (!productsQuery.isLoading) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
-			setProducts(productsQuery.data?.products || []);
-			setTotal(productsQuery?.data?.total ?? 0);
-		}
-	}, [
-		productsQuery.data?.products,
-		productsQuery.data?.total,
-		productsQuery.isLoading
-	]);
-
 	return (
-		<>
+		<div className='w-full flex flex-col'>
+			<p className='mb-4 text-sm text-zinc-500'>
+				Showing {products.length} of {totalProducts}
+			</p>
+
 			<ul className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
 				{products.map((product) => (
 					<li key={product.id}>
-						<ProductCard data={product}></ProductCard>
+						<ProductCard data={product} userId={userId}></ProductCard>
 					</li>
 				))}
 			</ul>
@@ -67,6 +70,6 @@ export const ProductsList: FC = () => {
 					</button>
 				</div>
 			)}
-		</>
+		</div>
 	);
 };
