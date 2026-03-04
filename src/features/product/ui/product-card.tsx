@@ -28,7 +28,7 @@ export const ProductCard: FC<ProductCardProps> = ({ data, userId }) => {
 					toast.error('Network error');
 				},
 				onSuccess: () => {
-					toast.success('Cart added successfully');
+					toast.success('Added successfully');
 				}
 			}
 		);
