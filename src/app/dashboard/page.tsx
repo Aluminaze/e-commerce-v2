@@ -1,9 +1,9 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 
 import { CartViewer } from '@/features/cart/ui/cart-viewer';
-import { Section } from '@/features/cart/ui/section';
 import { ProductsViewer } from '@/features/product/ui/products-viewer';
-import { UserInfo } from '@/features/user/ui/user-info';
+import { UserInfoSSR } from '@/features/user/ui/user-info-ssr';
 import { Header } from '@/shared/ui/header';
 
 export const metadata: Metadata = {
@@ -16,9 +16,13 @@ export default function Page() {
 			<Header />
 
 			<main className='mx-auto max-w-4xl space-y-6 p-4'>
-				<Section title='User Info'>
-					<UserInfo />
-				</Section>
+				<Suspense
+					fallback={
+						<div className='w-full h-24 animate-pulse rounded-md bg-zinc-200/80' />
+					}
+				>
+					<UserInfoSSR />
+				</Suspense>
 
 				<CartViewer />
 
