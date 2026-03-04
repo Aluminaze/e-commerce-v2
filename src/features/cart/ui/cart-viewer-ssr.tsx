@@ -37,7 +37,7 @@ export async function CartViewerSSR() {
 	const carts = cartsResult.data.carts;
 
 	if (carts.length === 0) {
-		return <p className='text-zinc-500 text-sm'>No items found.</p>;
+		return <p className='h-24 text-zinc-500 text-sm'>No items found.</p>;
 	}
 
 	const totalCartItems = carts.reduce(
