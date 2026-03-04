@@ -1,3 +1,4 @@
+import { HttpStatusCode } from 'axios';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -171,11 +172,11 @@ async function handle(
 		bodyBuf
 	});
 
-	if (upstreamRes.status === 401) {
+	if (upstreamRes.status === HttpStatusCode.Unauthorized) {
 		if (!sessionId || !refreshToken) {
 			const res = NextResponse.json(
 				{ message: 'Unauthorized' },
-				{ status: 401 }
+				{ status: HttpStatusCode.Unauthorized }
 			);
 			clearAuthCookies(res);
 			return res;
@@ -215,7 +216,7 @@ async function handle(
 		} catch {
 			const res = NextResponse.json(
 				{ message: 'Unauthorized' },
-				{ status: 401 }
+				{ status: HttpStatusCode.Unauthorized }
 			);
 			clearAuthCookies(res);
 			return res;
