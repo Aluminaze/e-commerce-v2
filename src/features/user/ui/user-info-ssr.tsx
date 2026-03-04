@@ -3,17 +3,17 @@ import Image from 'next/image';
 import { getMe } from '@/features/auth/api/server-fetch/get-me.server-fetch';
 
 export async function UserInfoSSR() {
-	const result = await getMe();
+	const meResult = await getMe();
 
-	if (result.status === 'error') {
+	if (meResult.status === 'error') {
 		return (
 			<div className='h-24 flex items-center rounded-lg border border-red-200 bg-red-50 p-3 text-sm dark:border-red-800 dark:bg-red-950'>
-				<p className='text-red-600 dark:text-red-400'>{result.message}</p>
+				<p className='text-red-600 dark:text-red-400'>{meResult.message}</p>
 			</div>
 		);
 	}
 
-	const user = result.data;
+	const user = meResult.data;
 
 	return (
 		<div className='h-24 flex items-center rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-800'>
