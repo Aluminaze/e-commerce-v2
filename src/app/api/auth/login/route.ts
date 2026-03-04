@@ -4,12 +4,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LoginRequestDto } from '@/features/auth/api/endpoints/login.endpoint';
 import {
 	ACCESS_COOKIE,
-	ACCESS_TOKEN_TTL_MINS,
 	DUMMYJSON_BASE_URL,
 	REFRESH_COOKIE,
 	SESSION_COOKIE
 } from '@/shared/config';
 import { cookieBaseOptions } from '@/shared/lib/cookies';
+import {
+	getAccessTokenExpiresAtDate,
+	getRefreshTokenExpiresAtDate
+} from '@/shared/lib/jwt';
 
 export async function POST(req: NextRequest) {
 	const body = (await req.json().catch(() => null)) as LoginRequestDto | null;
@@ -21,15 +24,13 @@ export async function POST(req: NextRequest) {
 		);
 	}
 
-	const expiresInMins = body.expiresInMins;
-
 	const upstreamRes = await fetch(`${DUMMYJSON_BASE_URL}/auth/login`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({
 			username: body.username,
 			password: body.password,
-			expiresInMins
+			expiresInMins: body.expiresInMins
 		})
 	});
 
@@ -60,8 +61,8 @@ export async function POST(req: NextRequest) {
 	}
 
 	const sessionId = crypto.randomUUID();
-	const accessExpiresAt = new Date(Date.now() + ACCESS_TOKEN_TTL_MINS * 60_000);
-	const refreshExpiresAt = new Date(Date.now() + expiresInMins * 60_000);
+	const accessExpiresAt = getAccessTokenExpiresAtDate();
+	const refreshExpiresAt = getRefreshTokenExpiresAtDate();
 
 	const res = NextResponse.json({
 		user: {

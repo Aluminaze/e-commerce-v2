@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import {
 	ACCESS_COOKIE,
-	ACCESS_TOKEN_TTL_MINS,
 	DUMMYJSON_BASE_URL,
 	REFRESH_COOKIE,
 	REFRESH_TOKEN_TTL_MINS,
 	SESSION_COOKIE
 } from '@/shared/config';
 import { cookieBaseOptions } from '@/shared/lib/cookies';
+
+import {
+	getAccessTokenExpiresAtDate,
+	getRefreshTokenExpiresAtDate
+} from './shared/lib/jwt';
 
 const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/logout'];
 
@@ -79,12 +83,8 @@ export async function proxy(request: NextRequest) {
 
 			const data = await refreshRes.json();
 
-			const accessExpiresAt = new Date(
-				Date.now() + ACCESS_TOKEN_TTL_MINS * 60_000
-			);
-			const refreshExpiresAt = new Date(
-				Date.now() + REFRESH_TOKEN_TTL_MINS * 60_000
-			);
+			const accessExpiresAt = getAccessTokenExpiresAtDate();
+			const refreshExpiresAt = getRefreshTokenExpiresAtDate();
 
 			request.cookies.set(ACCESS_COOKIE, data.accessToken);
 			request.cookies.set(REFRESH_COOKIE, data.refreshToken);
