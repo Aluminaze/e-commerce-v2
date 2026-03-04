@@ -1,7 +1,5 @@
-import { cache } from 'react';
-
+import { getMe } from '@/features/auth/api/server-fetch/get-me.server-fetch';
 import { Product } from '@/features/product/model';
-import { User } from '@/features/user/model';
 import { serverFetch } from '@/shared/lib/server-fetch';
 
 import { ProductsListSSR } from './products-list-ssr';
@@ -16,7 +14,7 @@ interface ProductsResponse {
 }
 
 export async function ProductsViewerSSR() {
-	const meResult = await cache(() => serverFetch<User>('auth/me'))();
+	const meResult = await getMe();
 
 	if (meResult.status === 'error') {
 		return (

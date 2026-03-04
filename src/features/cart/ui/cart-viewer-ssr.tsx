@@ -1,8 +1,7 @@
 import Image from 'next/image';
-import { cache } from 'react';
 
+import { getMe } from '@/features/auth/api/server-fetch/get-me.server-fetch';
 import { Cart } from '@/features/cart/model';
-import { User } from '@/features/user/model';
 import { serverFetch } from '@/shared/lib/server-fetch';
 
 interface CartsResponse {
@@ -13,7 +12,7 @@ interface CartsResponse {
 }
 
 export async function CartViewerSSR() {
-	const meResult = await cache(() => serverFetch<User>('auth/me'))();
+	const meResult = await getMe();
 
 	if (meResult.status === 'error') {
 		return (

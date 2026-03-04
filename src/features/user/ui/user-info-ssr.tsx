@@ -1,12 +1,9 @@
 import Image from 'next/image';
-import { cache } from 'react';
 
-import { serverFetch } from '@/shared/lib/server-fetch';
-
-import { User } from '../model';
+import { getMe } from '@/features/auth/api/server-fetch/get-me.server-fetch';
 
 export async function UserInfoSSR() {
-	const result = await cache(() => serverFetch<User>('auth/me'))();
+	const result = await getMe();
 
 	if (result.status === 'error') {
 		return (
