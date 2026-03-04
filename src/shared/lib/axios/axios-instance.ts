@@ -23,7 +23,7 @@ axiosAuth.interceptors.response.use(
 			const statusCode = response.status;
 
 			if (statusCode === HttpStatusCode.Unauthorized) {
-				window.location.href = '/';
+				window.location.href = '/api/auth/logout';
 
 				return;
 			}
