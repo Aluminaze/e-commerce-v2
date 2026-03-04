@@ -1,4 +1,3 @@
-import { User } from '@/features/user/model';
 import { ROUTE_API_AUTH } from '@/shared/constants/route-api';
 import { axiosAuth } from '@/shared/lib/axios';
 
