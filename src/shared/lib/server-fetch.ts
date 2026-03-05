@@ -5,7 +5,11 @@ import { cache } from 'react';
 
 import { ACCESS_COOKIE, REFRESH_COOKIE, SESSION_COOKIE } from '@/shared/config';
 
-import { ROUTE_API_LOGOUT_PATHNAME } from '../constants/route-api';
+import {
+	ROUTE_API_BASE_SEGMENT,
+	ROUTE_API_LOGOUT_PATHNAME,
+	ROUTE_API_PRIVATE_SEGMENT
+} from '../constants/route-api';
 
 export enum ServerFetchStatus {
 	Ok = 'ok',
@@ -48,7 +52,8 @@ function captureTokens(res: Response) {
 }
 
 export async function serverFetch<T>(
-	path: string
+	path: string,
+	init?: RequestInit
 ): Promise<ServerFetchResult<T>> {
 	try {
 		const store = getTokenStore();
@@ -70,10 +75,17 @@ export async function serverFetch<T>(
 		const protocol = headerStore.get('x-forwarded-proto') ?? 'http';
 		const baseUrl = `${protocol}://${host}`;
 
-		const res = await fetch(`${baseUrl}/api/private/${path}`, {
-			headers: { cookie: cookieHeader },
-			cache: 'no-store'
-		});
+		const mergedHeaders = new Headers(init?.headers);
+		mergedHeaders.set('cookie', cookieHeader);
+
+		const res = await fetch(
+			`${baseUrl}/${ROUTE_API_BASE_SEGMENT}/${ROUTE_API_PRIVATE_SEGMENT}/${path}`,
+			{
+				...init,
+				headers: mergedHeaders,
+				cache: init?.cache || 'no-store'
+			}
+		);
 
 		captureTokens(res);
 
