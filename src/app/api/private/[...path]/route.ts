@@ -1,43 +1,10 @@
-import { HttpStatusCode } from 'axios';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
-import {
-	ACCESS_COOKIE,
-	DUMMYJSON_BASE_URL,
-	REFRESH_COOKIE,
-	REFRESH_TOKEN_TTL_MINS,
-	SESSION_COOKIE
-} from '@/shared/config';
-import { cookieBaseOptions } from '@/shared/lib/cookies';
-import {
-	getAccessTokenExpiresAtDate,
-	getRefreshTokenExpiresAtDate
-} from '@/shared/lib/jwt';
+import { ACCESS_COOKIE, DUMMYJSON_BASE_URL } from '@/shared/config';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-/* ---------- types ---------- */
-
-type RefreshResult = {
-	accessToken: string;
-	refreshToken: string;
-	accessExpiresAt: Date;
-	refreshExpiresAt: Date;
-};
-
-/* ---------- single-refresh map (per session) ---------- */
-
-const g = globalThis as unknown as {
-	__refreshInFlight?: Map<string, Promise<RefreshResult>>;
-};
-const refreshInFlight: Map<
-	string,
-	Promise<RefreshResult>
-> = g.__refreshInFlight ?? (g.__refreshInFlight = new Map());
-
-/* ---------- header helpers ---------- */
 
 function stripHopByHopHeaders(headers: Headers) {
 	const h = new Headers(headers);
@@ -61,8 +28,6 @@ function stripHeadersForResponse(headers: Headers) {
 	h.delete('content-encoding');
 	return h;
 }
-
-/* ---------- proxy fetch ---------- */
 
 async function proxyFetch(params: {
 	req: NextRequest;
@@ -89,61 +54,6 @@ async function proxyFetch(params: {
 	});
 }
 
-/* ---------- single refresh ---------- */
-
-async function refreshForSession(
-	sessionId: string,
-	refreshToken: string
-): Promise<RefreshResult> {
-	const existing = refreshInFlight.get(sessionId);
-	if (existing) return existing;
-
-	const p = (async () => {
-		try {
-			const upstreamRes = await fetch(`${DUMMYJSON_BASE_URL}/auth/refresh`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					refreshToken,
-					expiresInMins: REFRESH_TOKEN_TTL_MINS
-				}),
-				cache: 'no-store'
-			});
-
-			const data = await upstreamRes.json().catch(() => null);
-
-			if (!upstreamRes.ok || !data?.accessToken || !data?.refreshToken) {
-				throw new Error(`Refresh failed: ${upstreamRes.status}`);
-			}
-
-			const accessExpiresAt = getAccessTokenExpiresAtDate();
-			const refreshExpiresAt = getRefreshTokenExpiresAtDate();
-
-			return {
-				accessToken: data.accessToken,
-				refreshToken: data.refreshToken,
-				accessExpiresAt,
-				refreshExpiresAt
-			};
-		} finally {
-			refreshInFlight.delete(sessionId);
-		}
-	})();
-
-	refreshInFlight.set(sessionId, p);
-	return p;
-}
-
-/* ---------- clear cookies ---------- */
-
-function clearAuthCookies(res: NextResponse) {
-	res.cookies.set(ACCESS_COOKIE, '', { ...cookieBaseOptions(), maxAge: 0 });
-	res.cookies.set(REFRESH_COOKIE, '', { ...cookieBaseOptions(), maxAge: 0 });
-	res.cookies.set(SESSION_COOKIE, '', { ...cookieBaseOptions(), maxAge: 0 });
-}
-
-/* ---------- main handler ---------- */
-
 async function handle(
 	req: NextRequest,
 	ctx: { params: Promise<{ path?: string[] }> }
@@ -160,84 +70,20 @@ async function handle(
 			: await req.clone().arrayBuffer();
 
 	const cookieStore = await cookies();
-	const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
 	const accessToken = cookieStore.get(ACCESS_COOKIE)?.value;
-	const refreshToken = cookieStore.get(REFRESH_COOKIE)?.value;
 
-	let upstreamRes = await proxyFetch({
+	const upstreamRes = await proxyFetch({
 		req,
 		upstreamUrl,
 		accessToken,
 		bodyBuf
 	});
 
-	if (!sessionId) {
-		const res = NextResponse.json(
-			{ message: 'Unauthorized' },
-			{ status: HttpStatusCode.Unauthorized }
-		);
-		clearAuthCookies(res);
-		return res;
-	}
-
-	if (upstreamRes.status === HttpStatusCode.Unauthorized) {
-		if (!sessionId || !refreshToken) {
-			const res = NextResponse.json(
-				{ message: 'Unauthorized' },
-				{ status: HttpStatusCode.Unauthorized }
-			);
-			clearAuthCookies(res);
-			return res;
-		}
-
-		try {
-			const tokens = await refreshForSession(sessionId, refreshToken);
-
-			upstreamRes = await proxyFetch({
-				req,
-				upstreamUrl,
-				accessToken: tokens.accessToken,
-				bodyBuf
-			});
-
-			const res = new NextResponse(upstreamRes.body, {
-				status: upstreamRes.status,
-				headers: stripHeadersForResponse(upstreamRes.headers)
-			});
-
-			res.cookies.set(ACCESS_COOKIE, tokens.accessToken, {
-				...cookieBaseOptions(),
-				expires: tokens.accessExpiresAt
-			});
-
-			res.cookies.set(REFRESH_COOKIE, tokens.refreshToken, {
-				...cookieBaseOptions(),
-				expires: tokens.refreshExpiresAt
-			});
-
-			res.cookies.set(SESSION_COOKIE, sessionId, {
-				...cookieBaseOptions(),
-				expires: tokens.refreshExpiresAt
-			});
-
-			return res;
-		} catch {
-			const res = NextResponse.json(
-				{ message: 'Unauthorized' },
-				{ status: HttpStatusCode.Unauthorized }
-			);
-			clearAuthCookies(res);
-			return res;
-		}
-	}
-
 	return new NextResponse(upstreamRes.body, {
 		status: upstreamRes.status,
 		headers: stripHeadersForResponse(upstreamRes.headers)
 	});
 }
-
-/* ---------- exports per method ---------- */
 
 export function GET(
 	req: NextRequest,
