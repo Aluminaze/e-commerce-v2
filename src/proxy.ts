@@ -100,12 +100,16 @@ async function refreshForSession(
 
 function applyTokens(
 	request: NextRequest,
-	response: NextResponse,
 	tokens: RefreshResult,
 	sessionId: string
-) {
+): NextResponse {
 	request.cookies.set(ACCESS_COOKIE, tokens.accessToken);
 	request.cookies.set(REFRESH_COOKIE, tokens.refreshToken);
+	request.cookies.set(SESSION_COOKIE, sessionId);
+
+	const response = NextResponse.next({
+		request: { headers: request.headers }
+	});
 
 	response.cookies.set(ACCESS_COOKIE, tokens.accessToken, {
 		...cookieBaseOptions(),
@@ -119,6 +123,8 @@ function applyTokens(
 		...cookieBaseOptions(),
 		expires: tokens.refreshExpiresAt
 	});
+
+	return response;
 }
 
 export async function proxy(request: NextRequest) {
@@ -126,7 +132,7 @@ export async function proxy(request: NextRequest) {
 
 	const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
 	const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
-	const sessionIdToken = request.cookies.get(SESSION_COOKIE)?.value;
+	const sessionId = request.cookies.get(SESSION_COOKIE)?.value;
 	const hasAccess = !!accessToken;
 	const hasRefresh = !!refreshToken;
 
@@ -144,29 +150,25 @@ export async function proxy(request: NextRequest) {
 	}
 
 	if (pathname.startsWith('/api/private/')) {
-		if (!hasRefresh || !sessionIdToken) {
+		if (!hasRefresh || !sessionId) {
 			return NextResponse.next();
 		}
 
 		if (!hasAccess || isTokenExpired(accessToken!)) {
 			try {
-				const tokens = await refreshForSession(sessionIdToken, refreshToken!);
+				const tokens = await refreshForSession(sessionId, refreshToken!);
 
-				request.cookies.set(ACCESS_COOKIE, tokens.accessToken);
-				request.cookies.set(REFRESH_COOKIE, tokens.refreshToken);
+				const response = applyTokens(request, tokens, sessionId);
 
-				const response = NextResponse.next({
-					request: { headers: request.headers }
-				});
-
-				applyTokens(request, response, tokens, sessionIdToken);
 				return response;
 			} catch {
 				const res = NextResponse.json(
 					{ message: 'Unauthorized' },
 					{ status: 401 }
 				);
+
 				clearCookies(res);
+
 				return res;
 			}
 		}
@@ -178,7 +180,7 @@ export async function proxy(request: NextRequest) {
 		return NextResponse.next();
 	}
 
-	if ((!hasAccess && !hasRefresh) || !sessionIdToken) {
+	if ((!hasAccess && !hasRefresh) || !sessionId) {
 		const res = NextResponse.redirect(new URL('/login', request.url));
 		clearCookies(res);
 		return res;
@@ -186,13 +188,10 @@ export async function proxy(request: NextRequest) {
 
 	if (hasRefresh && (!hasAccess || isTokenExpired(accessToken!))) {
 		try {
-			const tokens = await refreshForSession(sessionIdToken, refreshToken!);
+			const tokens = await refreshForSession(sessionId, refreshToken!);
 
-			const response = NextResponse.next({
-				request: { headers: request.headers }
-			});
+			const response = applyTokens(request, tokens, sessionId);
 
-			applyTokens(request, response, tokens, sessionIdToken);
 			return response;
 		} catch {
 			const res = NextResponse.redirect(new URL('/login', request.url));
